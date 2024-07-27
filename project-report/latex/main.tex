@@ -1,0 +1,128 @@
+\documentclass[12pt,a4paper]{article}
+
+% "Vorgegebene packages"
+\usepackage{a4wide}
+%\usepackage{fancyhdr} % delete this, I prefer "scrlayer-scrpage"
+\usepackage{graphicx}
+\usepackage{floatflt, epsfig}
+\usepackage{float} % allows for the usage of \begin{figure}[H] to specify "in-text-floating"
+\usepackage{subcaption} % use subcaptions in subfigures
+\usepackage{parskip}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools} % better text over arrow
+\usepackage{bm}
+\usepackage{subcaption}
+\usepackage[free-standing-units=true]{siunitx} % for consistent handling of SI units
+\usepackage[colorlinks=true, pdfstartview=FitV, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref} % enable links
+
+% My own additions
+\usepackage{enumerate} % to enable i, ii, iii enumeration
+\usepackage{hyperref} % to be able to click on links in PDF (nice to have)
+\usepackage[style=numeric, backend=biber]{biblatex} % better source handling % alphabetic
+\bibliography{literature.bib} % Enables an external sources document to be read in
+\usepackage[format=hang,
+            font=footnotesize,
+            labelfont={bf,it},
+            textfont=it,
+            justification=RaggedRight,
+            singlelinecheck=false]{caption} % better label-formatting
+%\setcounter{biburlnumpenalty}{7000} % To enable linebreaks in long urls for numbers
+
+\nocite{*} % Displays all sources at once without having to “quote” first
+\usepackage{pdfpages} % Simple attachment of pdf files (such as measurement report)
+\usepackage{makecell} % Line breaks within tables
+
+%Kopfzeile (design-Vorschlag)
+\usepackage[headsepline]{scrlayer-scrpage}
+\newpairofpagestyles{trueempty}{
+    \ihead{\section*{Appendix}}
+    \KOMAoption{headsepline}{false} % Deactivates the header line for appendix
+}% define a new but empty pair of page styles headings and plain
+\pagestyle{scrheadings}
+\clearscrheadfoot
+\automark[section]{section}
+\cfoot{\pagemark}
+\ohead{} % 
+\ihead{DSMC Collision Algorithms\\\leftmark} % statt \ohead{Physics Lab I\\Experiment October 15, 2021} 
+
+% Other mathematical additions
+\usepackage{physics} % Other mathematical additionsThe most important package for writing fractions/matrices/derivations/... to write. Instructions: http://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf
+%\usepackage{comment} % allow comment environment
+\usepackage{algorithm,algorithmic} % for nice box around algorithm
+
+\setlength{\parindent}{0pt} % Sets the indentation after a “real paragraph” to 0
+
+\newcommand{\m}[1]{\mathrm{#1}} % Shortcut for bold formulas (such as $\m{F}$, which makes “F” bold)
+
+\title{\vspace{-2cm}Galaxy Morphology} % add "\vspace{-1.8cm}" to move contents a bit up...
+\author{Alexander Liemen}
+\date{\today}
+
+\begin{document}
+
+%\maketitle
+\begin{titlepage}
+    \begin{center}
+        % title
+        %\vspace*{-1.5cm}
+        {\Huge Direct Simulation Monte Carlo Method Adapted for Coulomb Collisions}
+        
+        % subtitle (optional)
+        {\large HS24 Semester Project Report}
+        \vspace{1cm}
+        
+        % our names and e-mail adresses in a table!
+        \begin{minipage}[h]{\linewidth}
+            \centering
+            \begin{tabular}{r|l}
+                Alexander Liemen & \href{mailto:alexander.liemen@inf.ethz.ch}{alexander.liemen@inf.ethz.ch} 
+            \end{tabular}
+        \end{minipage}
+        \vspace{0.5cm}
+        
+        % name of our TA/supervisor
+        {\large\textit{Supervisor: Mohsen Sadr}}
+        \vspace{0.5cm}
+        
+        % last compiled date
+        {\large\today}
+    \end{center}
+    
+    \vfil
+    \begin{abstract}\label{abstract}
+This project focuses on simulating the relaxation behavior of a charged plasma, typically composed of electrons, using a particle-based approach. 
+%Plasma simulations have wide ranging applications, including advancements in particle accelerator technology, plasma-light interactions, and space propulsion systems. Among the various simulation methods, 
+This study employs the Direct Simulation Monte Carlo (DSMC) approach to address the computational challenges inherent in solving kinetic equations for plasmas. The implementation leverages the IPPL (Independent Parallel Particle Layer) framework and evaluates two collision algorithms, proposed by \textsc{Takizuka} and \textsc{Abe} (TA), and \textsc{Nanbu}. \\
+IPPL allows the algorithm to be fast and scalable. Both algorithms are benchmarked using three tests: the \textsc{Trubnikov} test to evaluate the collisions, the relaxation of a delta-like initial distribution and the induced heating of a cold sphere. \\
+Overall, the project concludes that \textsc{Nanbu}'s algorithm (1997) does not provide a significant advantage over TA (1977) in its proposed implementation due to its increased computation time. However, further improvements are addressed at the end. All test cases can be solved with the studied algorithms.
+    \end{abstract}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+
+\newpage
+\input{content.tex} % Outsourcing text makes the whole thing clearer
+
+\newpage % TODO remove later...
+\vspace{2cm}
+\printbibliography % Bessere Quellenangabe!
+
+% ----------------------------------------------------------------
+\newpage
+\thispagestyle{empty}
+\newpage 
+\appendix % Appendix begins here...
+\input{appendix.tex} % appendix contents file
+% ----------------------------------------------------------------
+% Anhang (Messprotokoll)
+%\newpage
+%\pagestyle{trueempty} % Deaktiviere Header
+%\addcontentsline{toc}{section}{Appendix}
+%\pagestyle{trueempty}
+%\includepdf[scale=0.9, pages={1}, pagecommand=]{ressources/protocol.pdf} % empty "pagecommand" to enable "Appendix" title...
+
+
+\end{document}
