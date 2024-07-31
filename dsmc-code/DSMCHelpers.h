@@ -199,16 +199,17 @@ ippl::Vector<double, 3> centerOfMass(const vector_view_type* R) {
 // since the force is dependent on the "average induced force" by a homogeneous charge distribution/particle cloud
 vector_view_type getDisorderInducedHeatingForcesView(const vector_view_type* R, const scalar_view_type* q,
                                                      //const ippl::Vector<double, 3>& rmin, const ippl::Vector<double, 3>& rmax,
-                                                     const vector_view_type* E, const double& confinementForceAdjust) {
+                                                     const vector_view_type* E, const double& confinementForceAdjust,
+                                                     const double R_sphere) {
     //ippl::Vector<double, 3> pre_factor = {pre_Factor_double, pre_Factor_double, pre_Factor_double};
     //vector_view_type forces = pre_factor; 
 
     // Required by the test case of the disorder induced heating process (unit meters)
     // const double bunch_R = 90.11657; // 17.78e-6;
     //ippl::Vector<double, 3> bunch_center = centerOfMass(R); // 0.5 * (rmin + rmax);
-    ippl::Vector<double, 3> bunch_center = 506.84 / 2;
+    ippl::Vector<double, 3> bunch_center = 506.84 / 2; // can hardcode, since it's only used in that one test case
     
-    ippl::Vector<double, 3> E_average_foc = centerOfMass(E) * confinementForceAdjust;
+    //ippl::Vector<double, 3> E_average_foc = centerOfMass(E) * confinementForceAdjust;
     //ippl::Vector<double, 3> test = (*R)(0)-bunch_center;
     //std::cout << test << " " << (*R)(0) << " ";
     //test /= normIPPLVector(test, false);
@@ -221,10 +222,19 @@ vector_view_type getDisorderInducedHeatingForcesView(const vector_view_type* R, 
         ippl::Vector<double, 3> relative_r = (*R)(i) - bunch_center; // position minus center of particle bunch (as given by the initialization, which is middle of the grid)
         double distance                    = normIPPLVector(relative_r, false); // distance from the center of the bunch
         
+        if (distance > R_sphere) {
+            // Normalize the position vector
+            relative_r /= distance; // (*R)(i) / distance;
+
+            forces(i) = -relative_r * dotIPPLVector(relative_r, (*E)(i)) * (*q)(i) / e0 * confinementForceAdjust * distance/R_sphere; // pre_factor_double;
+        } else {
+            forces(i) = 0.0; // ippl::Vector<double, 3>(0.0, 0.0, 0.0);
+        }
+
         if (distance < 1e-10) { distance = 1e-10; } // Avoid division by zero
-        relative_r /= distance; // unit vector pointing from the center of the bunch to the particle^
+        //relative_r /= distance; // unit vector pointing from the center of the bunch to the particle^
         
-        forces(i) = -relative_r * dotIPPLVector(relative_r, (*E)(i)) * (*q)(i) / e0 * confinementForceAdjust; // pre_factor_double;
+        //forces(i) = -relative_r * dotIPPLVector(relative_r, (*E)(i)) * (*q)(i) / e0 * confinementForceAdjust; // pre_factor_double;
         //forces(i) = -relative_r * -47256.887/(std::pow(distance, 2)*4*pi); // pre_factor_double;
         //double E_magnitude = normIPPLVector((*E)(i), false);
         //forces(i) = -relative_r * E_magnitude * (*q)(i) / e0; // pre_factor_double;
@@ -254,6 +264,24 @@ vector_view_type getDisorderInducedHeatingForcesView(const vector_view_type* R, 
         forces(i) = -relative_r * dotIPPLVector(relative_r, (*E)[i]) * (*q)[i] / e0; // "-" is definitely necessary!
     }*/
     return forces;
+}
+
+void removeRadialVelocityComponents(const vector_view_type* R, vector_view_type* P, const double R_sphere) {
+    ippl::Vector<double, 3> bunch_center = 506.84 / 2;
+    Kokkos::parallel_for("RemoveRadialVelocity", R->extent(0), KOKKOS_LAMBDA(const int i) {
+        // Calculate distance from the center of the sphere
+        ippl::Vector<double, 3> relative_r = (*R)(i) - bunch_center; // position minus center of particle bunch (as given by the initialization, which is middle of the grid)
+        double distance                    = normIPPLVector(relative_r, false);
+        
+        // Check if the particle is outside the sphere
+        if (distance > R_sphere) {
+            // Normalize the position vector
+            ippl::Vector<double, 3> norm_r = relative_r / distance; // (*R)(i) / distance;
+
+            // Remove the radial velocity component
+            (*P)(i) = (*P)(i) - norm_r * dotIPPLVector(norm_r, (*P)(i)); // Remove the radial component of the velocity
+        }
+    });
 }
 
 void applyReflectingBoundaryConditions(vector_view_type* R, vector_view_type* v, const double radius) {

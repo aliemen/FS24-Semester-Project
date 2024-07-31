@@ -530,19 +530,20 @@ public:
         // add another "kick" for the space confinement of the disorder induced heating process!
         //double R0 = 90.11657; // 17.78e-6;
         if (this->use_disorder_induced_heating_m) {
-            disorderInducedHeatingConfinementUpdate(dt);
+            //disorderInducedHeatingConfinementUpdate(dt);
+            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         // solve
-        size_type totalP        = this->totalP_m;
-        int it                  = this->it_m;
+        //size_type totalP        = this->totalP_m;
+        //int it                  = this->it_m;
         if (this->computeSelfField_m) {
-            bool isFirstRepartition = false;
+            /*bool isFirstRepartition = false;
             if (this->loadbalancer_m->balance(totalP, it + 1 - it)) {
                 auto* mesh = &fc->getRho().get_mesh();
                 auto* FL   = &fc->getFL();
                 this->loadbalancer_m->repartition(FL, mesh, isFirstRepartition);
-            }
+            }*/
             
             if (this->adjust_field_dims) adjustFieldMeshDimensions(); // need to adjust everytime. Otherwise streaming particles go out of the domain...
             this->par2grid();
@@ -550,7 +551,7 @@ public:
             this->fsolver_m->runSolver();
             //pc->E = pc->E*this->E_rescale; // rescale because of domain rescaling???
             this->grid2par();
-            resetBoundaries();
+            if (this->adjust_field_dims) resetBoundaries();
             //resetFieldDimensions(); // reset mesh before calling .update() (to properly apply bc)!
 
         }
@@ -559,7 +560,7 @@ public:
         pc->R = pc->R + pc->P * dt;  // R = R + P * dt
         pc->update(); // domain changed, so update...
         applyExtendedBC();
-        if (this->use_disorder_induced_heating_m) applyReflectingBoundaryConditions(&(pc->R.getView()), &(pc->P.getView()), 90.11657); // to keep particles inside the "sphere"
+        //if (this->use_disorder_induced_heating_m) applyReflectingBoundaryConditions(&(pc->R.getView()), &(pc->P.getView()), 90.11657); // to keep particles inside the "sphere"
 
         // kick 
         if (this->computeSelfField_m) {
@@ -568,7 +569,8 @@ public:
         }
         // add another "kick" for the space confinement of the disorder induced heating process!
         if (this->use_disorder_induced_heating_m) {
-            disorderInducedHeatingConfinementUpdate(dt);
+            //disorderInducedHeatingConfinementUpdate(dt);
+            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         IpplTimings::stopTimer(adv);
@@ -1282,7 +1284,7 @@ public:
         view_type* viewE      = &(pc->E.getView());
         
         // pc->P is the particle velocity attribute and forces is a Kokkos::View
-        view_type forces = getDisorderInducedHeatingForcesView(viewR, viewq, viewE, this->confinementForceAdjust); // this->rmin_m, this->rmax_m, 
+        view_type forces = getDisorderInducedHeatingForcesView(viewR, viewq, viewE, this->confinementForceAdjust, 90.11657); // this->rmin_m, this->rmax_m, 
         
         // Perform the "drift" on each element for linear inwards facing confinement force.
         // Needs to be done elementwise, since I can't multiply perform view_type and particleAttribute calculations elementwise... 
