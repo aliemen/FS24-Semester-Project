@@ -179,6 +179,8 @@ void runSphereTest(int arg, char* argv[]) {
 
     bool adjust_field_dims = std::string(argv[arg++]) == "true";
 
+    bool useDebyeLengthCollisionCutoff = std::string(argv[arg++]) == "true";
+
     // 7. Nanbu / Bird / Nanbu2
     std::string methods = argv[arg++];
 
@@ -208,6 +210,7 @@ void runSphereTest(int arg, char* argv[]) {
                                      startTimestamp, confinementForceAdjust);  // FFT
 
         manager.setSamplingVelocityScale(sampling_vector_scale);
+        manager.setCollisionOverwrite(useDebyeLengthCollisionCutoff);
         manager.setTimestepsize(timestepsize); // Overwrite timestepzsize
         manager.pre_run();
 

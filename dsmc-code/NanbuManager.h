@@ -69,6 +69,7 @@ protected:
     long long startTimestamp;
     double cellVolume = 1.0;
     double confinementForceAdjust = 1.0;
+    bool overwriteDebyeLengthCollisionCutoff = false;
 
     ippl::Vector<double, Dim> last_Rmin = 0.0;
     ippl::Vector<double, Dim> last_Rmax = 0.0;
@@ -242,6 +243,7 @@ public:
     }
 
     void setSamplingVelocityScale(double scale_) { this->sampling_vector_scale = scale_; } // only used for "cold sphere" test case ("deprecated")
+    void setCollisionOverwrite(bool overwrite_) { this->overwriteDebyeLengthCollisionCutoff = overwrite_; } 
 
     void initializeParticles() {
         Inform m("Initialize Particles");
@@ -537,7 +539,7 @@ public:
         //double R0 = 90.11657; // 17.78e-6;
         if (this->use_disorder_induced_heating_m) {
             disorderInducedHeatingConfinementUpdate(dt);
-            //removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
+            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         // solve
@@ -576,7 +578,7 @@ public:
         // add another "kick" for the space confinement of the disorder induced heating process!
         if (this->use_disorder_induced_heating_m) {
             disorderInducedHeatingConfinementUpdate(dt);
-            //removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
+            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         IpplTimings::stopTimer(adv);
@@ -1245,24 +1247,32 @@ public:
 
         
         // Get mesh for
-        // const Mesh_t<Dim>& mesh = this->fcontainer_m->getMesh();
+        const Mesh_t<Dim>& mesh = this->fcontainer_m->getMesh();
 
         // Get spacings
         //const vector_type& dx       = mesh.getMeshSpacing();
-        const vector_type& origin   = this->fcontainer_m->getMesh().getOrigin();
+        const vector_type& origin   = mesh.getOrigin();
         //const vector_type& gridsize = mesh.getGridsize();  // Number of cells per dimension
         //const vector_type invdx     = 1.0 / dx;
         
-        // Alternative: calculate Debye-length and with that generate new particle distribution!
-        // First get Debye length
-        const vector_type domainSpan = this->last_Rmax-this->last_Rmin;
-        double volume = domainSpan[0]*domainSpan[1]*domainSpan[2];
-        double debyeL = debyeLength(&(this->pcontainer_m->P.getView()), this->Q_m/this->totalP_m, volume);
-        this->lastDebyeL = debyeL;
+        vector_type gridsize;
+        vector_type invdx;
+        if (this->overwriteDebyeLengthCollisionCutoff) {
+            const vector_type& dx = mesh.getMeshSpacing();
+            gridsize              = mesh.getGridsize();  // Number of cells per dimension
+            invdx                 = 1.0 / dx;
+        } else {
+            // Alternative: calculate Debye-length and with that generate new particle distribution!
+            // First get Debye length
+            const vector_type domainSpan = this->last_Rmax-this->last_Rmin;
+            double volume                = domainSpan[0]*domainSpan[1]*domainSpan[2];
+            double debyeL                = debyeLength(&(this->pcontainer_m->P.getView()), this->Q_m/this->totalP_m, volume);
+            this->lastDebyeL             = debyeL;
 
-        // domain does not need to match real domain, since it's only for grouping particles together!
-        const vector_type gridsize = domainSpan / debyeL;	
-        const vector_type invdx    = 1.0 / debyeL;
+            // domain does not need to match real domain, since it's only for grouping particles together!
+            gridsize = domainSpan / debyeL;	
+            invdx    = 1.0 / debyeL;
+        }
         
 
         // Now define the "custom domain decomposition" grid based on the Debye length

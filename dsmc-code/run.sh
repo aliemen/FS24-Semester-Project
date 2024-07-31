@@ -48,8 +48,8 @@ chmod 777 data
 #       grid     totalP N    balance       collisions    dt_m        vector_scale
 #mpirun ./Nanbu 64 64 64 160000 1000 0.01 FFT true true Nanbu 1 2.15623e-13 63699.28 --info 10 # 156055; 160000 = 20^4 (for 4 ranks...)
 # ./Nanbu 64 64 64 160000 1000 0.01 FFT true true TakAbe 1 327.59496 0.0 --info 10 # natural units # 7.9e-5
-./Nanbu sphere 32 156055 1000 true true true true TakAbe 327.59496 0.0 1.0 1 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
-# bools: self-field, do collisions, debug, adaptive grid
+./Nanbu sphere 32 156055 1000 true true true true true TakAbe 327.59496 0.0 1.0 1 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
+# bools: self-field, do collisions, debug, adaptive grid, overwrite
 
 
 # For test case number one (error and convergence analysis) (Nanbu or TakAbe)
