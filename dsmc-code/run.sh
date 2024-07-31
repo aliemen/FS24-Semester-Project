@@ -48,7 +48,7 @@ chmod 777 data
 #       grid     totalP N    balance       collisions    dt_m        vector_scale
 #mpirun ./Nanbu 64 64 64 160000 1000 0.01 FFT true true Nanbu 1 2.15623e-13 63699.28 --info 10 # 156055; 160000 = 20^4 (for 4 ranks...)
 # ./Nanbu 64 64 64 160000 1000 0.01 FFT true true TakAbe 1 327.59496 0.0 --info 10 # natural units # 7.9e-5
-./Nanbu sphere 32 156055 1000 true true true true true TakAbe 327.59496 0.0 1.0 1 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
+# ./Nanbu sphere 32 156055 1000 true true true true false TakAbe 327.59496 0.0 1.0 1 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
 # bools: self-field, do collisions, debug, adaptive grid, overwrite
 
 
@@ -58,9 +58,9 @@ chmod 777 data
 
 
 # For the delta test case
-#./Nanbu delta 32 1 5.0 TakAbe 2000 0.01 200 false true false --info 10
-#./Nanbu delta   64        5           5.0     Nanbu 200    0.001    200     false       false         false      --info 10
-#        initial gridsize  realization t_final algo  N_part dx_ratio N_steps adjust_dims use_collision debug_outp
+./Nanbu delta 32 1 5.0 TakAbe 2000 0.01 200 false true false false --info 10
+#./Nanbu delta   64        5           5.0     Nanbu 200    0.001    200     false       false         false      false                  --info 10
+#        initial gridsize  realization t_final algo  N_part dx_ratio N_steps adjust_dims use_collision debug_outp overwrite_debye_cutoff
 
 
 # python plot.py 

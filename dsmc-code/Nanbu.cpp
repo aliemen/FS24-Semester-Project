@@ -107,6 +107,7 @@ void deltaTest(int arg, char* argv[]) {
     bool adjust_field_dims = std::string(argv[arg++]) == "true";
     bool computeCollisions = std::string(argv[arg++]) == "true";
     bool output_debug      = std::string(argv[arg++]) == "true";
+    bool overwrite_debye_cutoff = std::string(argv[arg++]) == "true";
     // initial gridsize  realization t_final algo  N_part N_steps dx_ratio use_collision debug_outp
 
     // 32 1 5.0 TakAbe 2000 0.01 200 true false --info 10
@@ -142,6 +143,7 @@ void deltaTest(int arg, char* argv[]) {
                                      startTimestamp, 1.0); 
         // manager.setSamplingVelocityScale(1.0); // Not relevant here
         manager.setTimestepsize(timestepsize); // Overwrite timestepzsize
+        manager.setCollisionOverwrite(overwrite_debye_cutoff);
         manager.pre_run();
 
         if (output_debug || every_it==0 || i%every_it==0) {
