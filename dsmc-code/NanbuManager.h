@@ -23,8 +23,9 @@
 
 #include <typeinfo>
 
-using view_type      = typename ippl::detail::ViewType<ippl::Vector<double, Dim>, 1>::view_type;
-using mass_view_type = typename ippl::ParticleAttrib<double>::view_type; // ippl::detail::ViewType<double, 1>::view_type;
+using view_type       = typename ippl::detail::ViewType<ippl::Vector<double, Dim>, 1>::view_type;
+// using field_view_type = typename ippl::BareField<ippl::Vector<double, Dim>, 1>::view_type;
+using mass_view_type  = typename ippl::ParticleAttrib<double>::view_type; // ippl::detail::ViewType<double, 1>::view_type;
 
 // define functions used in sampling particles
 /*struct InducedHeatingDistributionFunctionsR {
@@ -68,6 +69,10 @@ protected:
     long long startTimestamp;
     double cellVolume = 1.0;
     double confinementForceAdjust = 1.0;
+
+    ippl::Vector<double, Dim> last_Rmin = 0.0;
+    ippl::Vector<double, Dim> last_Rmax = 0.0;
+    double lastDebyeL                   = 0.0;
 
     // Vector_t<double, Dim> E_rescale = {1.0, 1.0, 1.0}; // Rescale E-field for the disorder induced heating process
     //double E_rescale = 1.0;
@@ -120,6 +125,8 @@ public:
                 std::cerr << "No collision model selected" << std::endl;
         }
         
+        this->last_Rmin = this->rmin_m;
+        this->last_Rmax = this->rmax_m;
         this->hr_m = this->rmax_m / this->nr_m;  // mesh spacing hr = rmax_m/[128,128,128]
         cellVolume = std::reduce(this->hr_m.begin(), this->hr_m.end(), 1., std::multiplies<double>());
 
@@ -321,8 +328,7 @@ public:
             std::mt19937_64 eng;
             eng.seed(this->seed);
             std::uniform_real_distribution<double> unif(-r, r);
-            typename ParticleContainer_t::particle_position_type::HostMirror R_host =
-                    this->pcontainer_m->R.getHostMirror();
+            typename ParticleContainer_t::particle_position_type::HostMirror R_host = this->pcontainer_m->R.getHostMirror();
 
             for (unsigned long int i = 0; i < nlocal; i++) {
                     double x, y, z, r_squared;
@@ -530,8 +536,8 @@ public:
         // add another "kick" for the space confinement of the disorder induced heating process!
         //double R0 = 90.11657; // 17.78e-6;
         if (this->use_disorder_induced_heating_m) {
-            //disorderInducedHeatingConfinementUpdate(dt);
-            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
+            disorderInducedHeatingConfinementUpdate(dt);
+            //removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         // solve
@@ -569,8 +575,8 @@ public:
         }
         // add another "kick" for the space confinement of the disorder induced heating process!
         if (this->use_disorder_induced_heating_m) {
-            //disorderInducedHeatingConfinementUpdate(dt);
-            removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
+            disorderInducedHeatingConfinementUpdate(dt);
+            //removeRadialVelocityComponents(&(pc->R.getView()), &(pc->P.getView()), 90.11657);
         }
 
         IpplTimings::stopTimer(adv);
@@ -604,8 +610,10 @@ public:
             //Xemitout.setf(std::ios::scientific, std::ios::floatfield);
             //dtout.setf(std::ios::scientific, std::ios::floatfield);
             // output every particle velocity to file (V)
-            view_type* P  = &(this->pcontainer_m->P.getView());
-            view_type* R  = &(this->pcontainer_m->R.getView());
+            const view_type* P     = &(this->pcontainer_m->P.getView());
+            const view_type* R     = &(this->pcontainer_m->R.getView());
+            const view_type* viewE = &(this->pcontainer_m->E.getView()); // careful: pc->E != fc->getE (one is the solved field, one is the scattered one)
+            
             //int time_step = this->it_m;
 
             /*
@@ -743,13 +751,16 @@ public:
             //Inform velocityExpOut(NULL, "data/NB_velocity.csv", Inform::APPEND);
             if (this->realization_counter == 0 && this->it_m == 0) {
                 Inform velocityExpOut(NULL, velocitySavePath.c_str(), Inform::OVERWRITE);
-                velocityExpOut << "realization;time;Energy;Enery_x;Energy_y;Energy_z;Xemit_x;cell_vol" << endl;
+                velocityExpOut << "realization;time;Energy;Enery_x;Energy_y;Energy_z;Xemit_x;cell_vol;meanE_x;meanE_y;meanE_z;DebyeL;T" << endl;
             }
             Inform velocityExpOut(NULL, velocitySavePath.c_str(), Inform::APPEND);
             velocityExpOut.precision(10);
             
+            
+            ippl::Vector<double, Dim> meanE = getMeanE(viewE);
             velocityExpOut << this->realization_counter << ";" << this->time_m << ";" << Energy << ";" << Enery_x << ";" << Energy_y << ";" << Energy_z 
-                           << ";" << Xemit_x << ";" << this->cellVolume*std::reduce(this->nr_m.begin(), this->nr_m.end(), 1., std::multiplies<double>()) << endl;
+                           << ";" << Xemit_x << ";" << this->cellVolume*std::reduce(this->nr_m.begin(), this->nr_m.end(), 1., std::multiplies<double>()) 
+                           << ";" << meanE[0] << ";" << meanE[1] << ";" << meanE[2] << ";" << this->lastDebyeL << ";" << getTemperature(P, nlocal) << endl;
 
 
         } else if (this->initial_distr == "convergence") {
@@ -1157,7 +1168,7 @@ public:
         double V_n   = std::sqrt(dV[0] * dV[0] + dV[1] * dV[1] + dV[2] * dV[2]);
         double V_tau = std::sqrt(dV[1] * dV[1] + dV[2] * dV[2]);
 
-        double invTau1 = getInvTau1(i, j, m, q, rho, V_n, this->initial_distr, temperature);
+        double invTau1 = getInvTau1(i, j, m, q, rho, V_n, this->initial_distr, temperature, this->lastDebyeL);
         double s       = this->tau_m * invTau1 / rho * this->dt_m; // V_n/(rho * rho); // this one or not, i don't know, just use annotation
         //s = 1.1;
         double A       = getA(s);
@@ -1206,7 +1217,8 @@ public:
         double u_n               = normIPPLVector(dV, false);
         double u_p               = std::sqrt(std::pow(dV[0], 2) + std::pow(dV[1], 2)); // Careful: Nanbu and this have different def's of "perpendicular"
         
-        auto [sinPhi, cosPhi, sinTh, cosTh] = genPhiThetaTakizukaAbe(this->dt_m, u_n, i, j, m, q, rho, gen, dis, temperature, this->initial_distr); 
+        auto [sinPhi, cosPhi, sinTh, cosTh] = genPhiThetaTakizukaAbe(this->dt_m, u_n, i, j, m, q, rho, gen, dis, 
+                                                                     temperature, this->initial_distr, this->lastDebyeL); 
 
         double ux = dV[0], uy = dV[1], uz = dV[2]; 
 
@@ -1231,14 +1243,29 @@ public:
         size_type nlocal = this->pcontainer_m->getLocalNum();
         view_type* R     = &(this->pcontainer_m->R.getView());
 
+        
         // Get mesh for
-        const Mesh_t<Dim>& mesh = this->fcontainer_m->getMesh();
+        // const Mesh_t<Dim>& mesh = this->fcontainer_m->getMesh();
 
         // Get spacings
-        const vector_type& dx       = mesh.getMeshSpacing();
-        const vector_type& origin   = mesh.getOrigin();
-        const vector_type& gridsize = mesh.getGridsize();  // Number of cells per dimension
-        const vector_type invdx     = 1.0 / dx;
+        //const vector_type& dx       = mesh.getMeshSpacing();
+        const vector_type& origin   = this->fcontainer_m->getMesh().getOrigin();
+        //const vector_type& gridsize = mesh.getGridsize();  // Number of cells per dimension
+        //const vector_type invdx     = 1.0 / dx;
+        
+        // Alternative: calculate Debye-length and with that generate new particle distribution!
+        // First get Debye length
+        const vector_type domainSpan = this->last_Rmax-this->last_Rmin;
+        double volume = domainSpan[0]*domainSpan[1]*domainSpan[2];
+        double debyeL = debyeLength(&(this->pcontainer_m->P.getView()), this->Q_m/this->totalP_m, volume);
+        this->lastDebyeL = debyeL;
+
+        // domain does not need to match real domain, since it's only for grouping particles together!
+        const vector_type gridsize = domainSpan / debyeL;	
+        const vector_type invdx    = 1.0 / debyeL;
+        
+
+        // Now define the "custom domain decomposition" grid based on the Debye length
 
         std::unordered_map<size_t, size_t> mesh_sizes;  // contains (cellID, #Particles) --> want to avoid .push_back(...)
         for (size_t idx = 0; idx < nlocal; ++idx) {
@@ -1257,9 +1284,7 @@ public:
         // Now actually fill the mesh_decomposition with particle indices doing the same as
         // before...
         for (size_t idx = 0; idx < nlocal; ++idx) {
-            Vector_t<size_t, Dim> l =
-                ((*R)(idx)-origin)
-                * invdx;  // add +0.5 to allocate to grid points, leave it out for grid CELLS
+            Vector_t<size_t, Dim> l = ((*R)(idx)-origin) * invdx;  // add +0.5 to allocate to grid points, leave it out for grid CELLS
             size_t cellID = getUniqueParticleID(l, gridsize);
             mesh_decomposition[cellID].push_back(idx);
         }
@@ -1361,6 +1386,9 @@ public:
         }
         if (this->output_debug) m << "GlobalMaxR: " << globalMaxR << " GlobalMinR: " << globalMinR << endl;
         
+        // Keep track of rmin, rmax "counter" to estimate occupied volume
+        this->last_Rmin = globalMinR;
+        this->last_Rmax = globalMaxR;
         //Vector_t rescale_vector = (this->rmax_m-this->rmin_m) / (globalMaxR-globalMinR);
         
         // Calculate new mesh spacing 

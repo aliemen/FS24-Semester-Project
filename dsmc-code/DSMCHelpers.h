@@ -95,14 +95,24 @@ Here we have some helper functions to calcualte 1/tau_1 which is used for s
 in solving f(A) = exp(-s) for A (which is used for angle sampling).
 */
 using vector_view_type = typename ippl::detail::ViewType<ippl::Vector<double, Dim>, 1>::view_type;
+// using field_view_type  = typename ippl::BareField<ippl::Vector<double, Dim>, 1>::view_type;
 using scalar_view_type = typename ippl::ParticleAttrib<double>::view_type; // ippl::detail::ViewType<double, 1>::view_type;
 
 //double getCellT(const vector_t& p_indices, scalar_view_type& masses, ) {
 //    return 1.0;
 //}
 
+ippl::Vector<double, Dim> getMeanE(const vector_view_type* E) {
+    size_t N = (*E).extent(0);
+    ippl::Vector<double, Dim> meanE = 0.0;
+    Kokkos::parallel_reduce(
+        "MeanE", N, KOKKOS_LAMBDA(const int i, ippl::Vector<double, Dim>& val) {
+            val += (*E)(i);
+        }, meanE);
+    return meanE / N;
+}
 
-double getTemperature(vector_view_type* P, int NPart) {
+double getTemperature(const vector_view_type* P, int NPart) {
     double temp = 0.0;
     Kokkos::parallel_reduce(
         "v_y_sq", (*P).extent(0),
@@ -115,19 +125,24 @@ double getTemperature(vector_view_type* P, int NPart) {
     return temp;
 }
 
-double coulombLog(double& b0) { // const double& temperature, const double& rho, 
+double debyeLength(const vector_view_type* P, const double& charge, const double& volume) {
+    double n_density = (*P).extent(0) / volume;
+    return std::sqrt(e0*kB*getTemperature(P, (*P).extent(0)) / (n_density * std::pow(charge, 2)));
+}
+
+double coulombLog(const double& b0, const double& lmbd_D) { // const double& temperature, const double& rho, 
     //double lmdb_D = 7.4e-6/1.973e-7; // according to Nanbu paper (4649, right side E.))
-    //return std::log(lmdb_D/b0);
-    b0 *= 1.0;
+    return std::log(lmbd_D/b0);
+    //b0 *= 1.0;
     //return 23 - std::log(std::sqrt(rho)*std::pow(temperature, -1.5));
     //return std::sqrt(temperature / (4*pi*rho));
-    return 10.0; // suggested by https://en.wikipedia.org/wiki/Coulomb_collision#Coulomb_logarithm
+    //return 10.0; // suggested by https://en.wikipedia.org/wiki/Coulomb_collision#Coulomb_logarithm
 }
 
 double getInvTau1(const size_t& i1, const size_t& i2, 
                   const scalar_view_type* masses, const scalar_view_type* charges,
                   const double& rho, const double& V_n,
-                  const std::string& test_case, double& T_total) {
+                  const std::string& test_case, double& T_total, const double& lmbd_D) {
     /*
     V_n:    Absolute value of relative velocity |v1-v2|.
     i1, i2: Indices of both colliding particles, used to access charges, masses view.
@@ -144,8 +159,8 @@ double getInvTau1(const size_t& i1, const size_t& i2,
         return lnLambda/(4*pi)*std::pow(q1*q2 / m_r, 2) * rho*rho / std::pow(V_n, 3);
     } else {
         // lnLambda = 
-        double b0 = std::abs(q1*q2) / (2*pi*e0*m_r * T_total*3);
-        lnLambda = coulombLog(b0); // T_total, rho, 
+        double b0 = std::abs(q1*q2) / (2*pi*e0*m_r * T_total*kB*3);
+        lnLambda = coulombLog(b0, lmbd_D); // T_total, rho, 
         return 4*pi*std::pow(q1*q2 / (4*pi*e0*m_r), 2) *rho*rho*lnLambda/std::pow(V_n, 3);
     }
 }
@@ -231,7 +246,7 @@ vector_view_type getDisorderInducedHeatingForcesView(const vector_view_type* R, 
             forces(i) = 0.0; // ippl::Vector<double, 3>(0.0, 0.0, 0.0);
         }
 
-        if (distance < 1e-10) { distance = 1e-10; } // Avoid division by zero
+        // if (distance < 1e-10) { distance = 1e-10; } // Avoid division by zero
         //relative_r /= distance; // unit vector pointing from the center of the bunch to the particle^
         
         //forces(i) = -relative_r * dotIPPLVector(relative_r, (*E)(i)) * (*q)(i) / e0 * confinementForceAdjust; // pre_factor_double;
@@ -310,7 +325,7 @@ std::tuple<double, double, double, double> genPhiThetaTakizukaAbe(const double& 
                                                                   const scalar_view_type* masses, const scalar_view_type* charges,
                                                                   const double& rho, 
                                                                   std::mt19937& gen, std::uniform_real_distribution<>& dis,
-                                                                  double& temperature, const std::string& test_case) {
+                                                                  double& temperature, const std::string& test_case, const double& lmbd_D) {
     // Calculate relative mass
     double m1  = (*masses)(i1), m2 = (*masses)(i2);
     double m12 = m1*m2/(m1 + m2);
@@ -324,8 +339,8 @@ std::tuple<double, double, double, double> genPhiThetaTakizukaAbe(const double& 
     // double lmbd   = std::sqrt(9.3333e-3 / (4*pi*rho)); // better approximation for known temperature
     if (test_case == "convergence") temperature = 0.008/3 + 2*0.01/3;
     
-    double b0 = std::abs(q1*q2) / (2*pi*e0*m12 * temperature*3);
-    double lmbd = coulombLog(b0); // temperature, rho, 
+    double b0 = std::abs(q1*q2) / (2*pi*e0*m12 * temperature*kB*3);
+    double lmbd = coulombLog(b0, lmbd_D); // temperature, rho, 
     // double lmbd    = std::sqrt(temperature / (4*pi*rho)); // coulombLog(temperature, rho); // std::sqrt(T_total / (4*pi*rho)); // 23 - std::log(std::sqrt(rho*1e12)*std::pow(T_total, -1.5)); // 10.0; //  // 
     double sgm_sq  = std::pow(q1*q2, 2)*lmbd*rho / (8*pi*std::pow(e0*m12, 2)*std::pow(u, 3)) * dt;
 

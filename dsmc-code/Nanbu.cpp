@@ -200,7 +200,7 @@ void runSphereTest(int arg, char* argv[]) {
     //if (methods == "Bird") { timestep_fraction = 1.0; }
 
     // 10. Set the mass_per_particle constant
-    double mass_per_particle = 510902.0583; //9.1e-31; // electron
+    double mass_per_particle = 510936.6237; //9.1e-31; // electron
     int every_it = realizations / 10;
     for (int i = 0; i < realizations; ++i) {
         NanbuManager<T, Dim> manager(totalP, nt, nr, lbt, solver, computeSelfField, computeCollisions, methods, tau, 

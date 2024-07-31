@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -n 2 # Number of cores
+#SBATCH -n 1 # Number of cores
 #SBATCH --time=90:00 # Runtime in minutes
 #SBATCH --mem-per-cpu=2000              # memory per CPU core
 #SBATCH --tmp=4000                        # per node!!
@@ -9,13 +9,17 @@
 
 cd ../..
 
-module load gcc/11.4.0 cmake/3.26.3 cuda/12.1.1 openmpi/4.1.4 
+#module load gcc/11.4.0 cmake/3.26.3 cuda/12.1.1 openmpi/4.1.4 # seems to be old; need to load "stack/..." 
+echo "Loading correct software stack..."
+module purge
+module load stack/2024-05 
+module load gcc/13.2.0 cmake/3.27.7 cuda/12.2.1 openmpi/4.1.6
 
 # ./ippl-build-scripts/999-build-everything -t serial -k -f -i -u
 
 # cd ippl/build_serial/05.03.dsmc/dsmc-code-simple
 #cd ippl/build_openmp/05.03.dsmc/dsmc-code-simple # this for multi threading
-cd build_openmp/dsmc-code-clone/dsmc-code
+cd build_serial/dsmc-code-clone/dsmc-code
 #cd build_serial/dsmc-code-clone/dsmc-code
 
 export OMP_PROC_BIND=spread # set for multi threading to indicate that mpi can use ALL available cores
@@ -44,11 +48,8 @@ chmod 777 data
 #       grid     totalP N    balance       collisions    dt_m        vector_scale
 #mpirun ./Nanbu 64 64 64 160000 1000 0.01 FFT true true Nanbu 1 2.15623e-13 63699.28 --info 10 # 156055; 160000 = 20^4 (for 4 ranks...)
 # ./Nanbu 64 64 64 160000 1000 0.01 FFT true true TakAbe 1 327.59496 0.0 --info 10 # natural units # 7.9e-5
-./Nanbu sphere 32 156055 1000 true true false true Nanbu 327.59496 0.0 1.0 10 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
-
-#./Nanbu 32 32 32 2000000 40 0.01 FFT true Nanbu2 1 --info 10
-
-#./Nanbu 32 32 32 2000000 40 0.01 FFT true Bird 1 --info 10
+./Nanbu sphere 32 156055 1000 true true true true TakAbe 327.59496 0.0 1.0 1 --info 10 # 2.4e7 --> initial 150MeV bunch, dt=2.15623e-13s=327.59496/eV
+# bools: self-field, do collisions, debug, adaptive grid
 
 
 # For test case number one (error and convergence analysis) (Nanbu or TakAbe)
