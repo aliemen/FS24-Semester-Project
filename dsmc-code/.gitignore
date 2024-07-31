@@ -3,6 +3,6 @@
 # ignore the results folder
 results/
 
-run.sh
+# run.sh
 
-run_multiple_param.sh
+# run_multiple_param.sh
