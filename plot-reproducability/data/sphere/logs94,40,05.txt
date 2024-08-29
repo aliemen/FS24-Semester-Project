@@ -1,0 +1,66 @@
+
+
+------------------------------------------
+1722070028194, 2024-07-27 10:47:08.194
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 506.84 , 506.84 , 506.84 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 156055
+	Total number of timesteps: 1000
+	Grid dimensions:           ( 32 , 32 , 32 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        0
+	Collision Method:          Nanbu
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         510902
+	Initial distribution:      sphere
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      1
+	Field solver grid adjust.: 1
+
+
+------------------------------------------
+1722070052340, 2024-07-27 10:47:32.340
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 506.84 , 506.84 , 506.84 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 156055
+	Total number of timesteps: 1000
+	Grid dimensions:           ( 32 , 32 , 32 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          TakAbe
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         510902
+	Initial distribution:      sphere
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      1
+	Field solver grid adjust.: 1
+
+
+------------------------------------------
+1722070085305, 2024-07-27 10:48:05.305
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 506.84 , 506.84 , 506.84 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 156055
+	Total number of timesteps: 1000
+	Grid dimensions:           ( 32 , 32 , 32 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          Nanbu
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         510902
+	Initial distribution:      sphere
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      1
+	Field solver grid adjust.: 1
