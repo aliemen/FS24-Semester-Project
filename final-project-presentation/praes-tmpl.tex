@@ -1,0 +1,752 @@
+\documentclass[xcolor=pdftex,table,10pt,yellow,mathserif]{beamer}
+%\usepackage[numbers]{natbib}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{ulem}
+\usepackage{algorithm,algorithmic}
+\usepackage{tikz}
+\usepackage{pgflibraryshapes}
+\usepackage{beamerthemesplit}
+\mode<presentation> {
+\usetheme{PSI}
+}
+\usepackage[english]{babel}
+\usetikzlibrary{shapes,arrows,snakes,backgrounds}
+\usepackage[overlay,absolute]{textpos}
+\usepackage[latin1]{inputenc}
+\usepackage{pgfpages}
+\usepackage{ulem}
+\usetikzlibrary{mindmap,trees}
+\usepackage{verbatim}
+\usepackage{pgfpages}
+\usepackage{bbding}
+\xdefinecolor{mygreen}{RGB}{0,220,0}
+\xdefinecolor{myblue}{RGB}{26,150,255}
+
+% My own packages... 
+\usepackage{comment}
+\usepackage{physics} % everyone should use this ;)
+% \usepackage{minipage}
+\usepackage[style=numeric, backend=biber]{biblatex}
+\bibliography{literature.bib}
+\renewcommand*{\bibfont}{\tiny} % use tiny font in references!
+\nocite{*} % always cite everything
+\usepackage{siunitx} % Nice units :)
+\usepackage{listings}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    breakatwhitespace=false,     
+    basicstyle=\ttfamily\tiny,
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+
+
+\newcommand{\qvec}{\mathbf{q}}
+\newcommand{\lieoperator}[1]{{:\!#1\!:\!}}
+%\newcommand{\poissonbracket}[1]{ \left[ #1 \right] }
+\newcommand{\lietransformation}[1]{e^{:\!#1\!:}}
+
+\newcommand*\tick{\item[\color{mygreen}\Checkmark]}
+
+
+\newtheorem{thm}{Theorem}
+
+% ************************ space ************************************
+\newcommand{\hhs}[1]{\hspace{#1mm}}
+\newcommand{\hs}{\hspace{5mm}}
+\newcommand{\vp}{\vspace{1mm}}
+\newcommand{\vs}{\vspace{5mm}}
+\newcommand{\jl}{$\frac{}{}$} %User defined for empty symbol to jump line
+% ********************** newcommand *********************************
+\newcommand{\mbf}[1]{\mbox{\boldmath $#1$}}
+\newcommand{\hb}[1]{\hspace{-#1 mm}}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\QED}{\hfill $\Box$}
+% *********************** frequently used math symbols from AMS *******
+%\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+%\newcommand{\abs}[1]{\left\vert#1\right\vert}
+%\newcommand{\set}[1]{\left\{#1\right\}}
+
+
+\definecolor{Maroon}{rgb}{.5,.1,.25}% Used for Trinity University
+
+
+
+
+
+
+\mode<presentation>
+{
+  \usepackage{pgf}
+  \usepackage{hyperref}
+  \setbeamercovered{transparent}
+  \setbeamercovered{transparent}  
+}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection,hideothersubsections]
+  \end{frame}
+}
+
+\AtBeginSubsection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+}
+
+
+\setbeamercolor{uppercolgreen}{fg=white,bg=yellow!35}
+\setbeamercolor{lowercolgreen}{fg=black,bg=yellow!90}
+
+
+\title{Monte Carlo Solution to Coulomb Collisions}
+
+\author{\href{mailto:alexander.liemen@inf.ethz.ch}{Alexander Liemen}}
+
+
+\date{\today}
+
+\titlegraphic{
+ \includegraphics[width=10cm]{./figures/figures-slides/PSI} \\
+}
+
+\begin{document}
+
+ \frame{
+ \maketitle
+}
+%
+ \frame{
+ \tableofcontents
+}
+
+
+% Make the doc cleaner... 
+\include{inhalt}
+
+
+\begin{comment}
+\begin{frame}{Charge}
+\begin{itemize}
+\item BD challenges and priorities
+\item strategy for end-to-end simulations
+\item specific issues 
+\begin{itemize}
+\item collimators
+\item (diagnostics)
+\end{itemize}
+\item (protons vs deuterons)
+\end{itemize}
+
+Groups involved
+\begin{itemize}
+\item Catania:  D. Campo, A. Calanna \& L. Calabretta
+\item PSI/MIT: D. Winklehner, A. Adelmann
+\item PSI/Huddersfield: A. Kolano
+\item CIAE: J. Yang
+\end{itemize}
+
+\end{frame}
+
+\section{Priorities}
+\begin{frame}{Priorities}
+
+
+
+
+\begin{alertblock}{Priorities for Beam Dynamics (BD) studies}
+\begin{enumerate}
+\item IsoDAR (DIC)
+\begin{itemize}
+\item includes Best test run 2 in 2014
+\item includes in a wider sense the Catania tests ($\dots$ 2016)
+\end{itemize}
+\item DAE$\delta$ALUS (DSRC)
+\end{enumerate}
+\end{alertblock}
+\end{frame}
+
+
+
+\section{Present Status}
+
+\begin{frame}{Present Status}
+\begin{itemize}
+\item unfinished paper \cite{daednim} (8 sector design)
+\begin{itemize}
+\item submitted to NIM-A, accepted by referee 2, rejected by referee 1
+\end{itemize}
+
+\item Space charge in DIC \& DSRC \cite{daeiso}
+\begin{itemize}
+\item not covering
+\begin{itemize}
+\item LEBT \& inflector
+\item coupling of the cyclotrons
+\item HEBT to target
+\item foil cleaning of high energy beam
+\end{itemize}
+\end{itemize}
+\item 6 sector magnet design of DSRC, AO, $H=6$ done
+\item desire to run DIC in $h=4$ 
+\item limits of Injector II \& usability of FFAG's 
+\item Order of magnitude improvement w.r.t. time to solution of OPAL simulations \cite{TM}
+\end{itemize}
+\end{frame}
+
+
+
+
+\section{Overall Strategy}
+\begin{frame}{Overall Strategy}
+BD working mode:
+\begin{itemize}
+\item Iteration between the design group (Catania, single particle dynamics) \&
+\item multi particle dynamics incl. space charge (PSI,MIT,CIAE) to
+\begin{itemize}
+\item[$\rightarrow$] \alert{understand and minimize halo/losses}
+\end{itemize}
+\end{itemize}
+Credible models:
+\begin{enumerate}
+\item create a credible model by comparing to existing machines and experiments
+\begin{itemize}
+\item Best experiment (LEBT \& injection)
+\item PSI facility: model verification, cyclotron coupling
+\end{itemize}
+
+
+\item S2E simulations of IsoDAR \& DAE$\delta$ALUS
+\end{enumerate}
+\end{frame}
+
+
+\section{Near Term Plans}
+\begin{frame}{Near Term Plans}
+\begin{block}{}
+\begin{table}[ht]\footnotesize
+\begin{center}
+\begin{tabular}{p{5cm}cc}
+\hline
+{\bf Action} & {\bf Responsable} & {\bf Due Date} \\
+\hline
+{\bf Design} & &  \\
+$h=4$ mode of DIC & Jianjun &  4Q 2013\\
+DIC inflector matching & Daniela & 4Q 2013\\
+\hline
+{\bf Precise Simulations (OPAL)} & &  \\
+Spiral inflector into DIC \& SC & Daniel/Andreas &  1Q 2014\\
+Full DIC simulation & Daniel/Andreas &  2Q 2014\\
+Coupling high intensity cyclotrons  & Daniel/Andreas &  3-4Q 2014\\
+\hline
+{\bf Miscellaneous} & &  \\
+NIM-A paper on 8 sector & Andreas  & 4Q 2013\\
+Participate in run 2 @ Best & Daniel et al. & 1Q 2014\\
+Paper on spiral inflector and SC & Daniel et al & 2Q 2014\\
+BD-Model DB & ? & now \\
+\hline
+\end{tabular}
+\label{roadmap}
+\end{center}
+\end{table}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Figures-I}
+\begin{itemize}
+\item some
+\item text
+\end{itemize}
+
+\begin{figure}
+\begin{center}
+\includegraphics[angle=90,width=1.\textwidth]{figures/C9B7BSB-2D-1mA-80}
+\end{center}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Figures-II}
+
+\begin{figure}
+\begin{center}
+\includegraphics[angle=0,width=.9\textwidth]{figures/Comp-Transverse}
+\end{center}
+\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example - Arrays}
+
+
+  \begin{itemize}
+
+      \item $\left\{
+            \begin{array}{cccc}
+              -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in } \Omega \\
+              u &\geq & 0, & u\in H_0^1(\Omega)
+            \end{array}
+           \right.$
+
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$\left\{
+  \begin{array}{cccc}
+  -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in }
+  \Omega \\
+  u &\geq & 0, & u\in H_0^1(\Omega)
+  \end{array}
+\right.$
+
+\end{verbatim}
+
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Example - Arrays}
+   \framesubtitle{Change centering}
+
+  \begin{itemize}
+
+    \item $\left\{
+            \begin{array}{lcrr}
+              -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in } \Omega \\
+              u &\geq & 0, & u\in H_0^1(\Omega)
+            \end{array}
+           \right.$
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$\left\{
+  \begin{array}{lcrr}
+  -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in }
+  \Omega \\
+  u &\geq & 0, & u\in H_0^1(\Omega)
+  \end{array}
+\right.$
+
+\end{verbatim}
+
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example - Arrays}
+   \framesubtitle{Change centering}
+
+  \begin{itemize}
+
+
+    \item $\left\{
+            \begin{array}{rcll}
+              -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in } \Omega \\
+              u &\geq & 0, & u\in H_0^1(\Omega)
+            \end{array}
+           \right.$
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$\left\{
+  \begin{array}{rcll}
+  -\Delta u +\lambda u &= & |u|^{p-2}, &\textrm{ in }
+  \Omega \\
+  u &\geq & 0, & u\in H_0^1(\Omega)
+  \end{array}
+\right.$
+
+\end{verbatim}
+
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{More Examples}
+
+  \begin{itemize}
+
+    \item $\ds \varphi (u) = \int_{\Omega} \left[ \dfrac{\|\nabla u\|^2}{2} + \lambda\dfrac{u^2}{2} - \dfrac{(u^+)^p}{p}\right] d\mu $
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$\ds \varphi (u) = \int_{\Omega} \left[
+ \dfrac{\|\nabla u\|^2}{2} +
+ \lambda\dfrac{u^2}{2} -
+ \dfrac{(u^+)^p}{p} \right] d\mu $
+
+\end{verbatim}
+
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Even More Examples}
+
+De Morgan's Law
+
+  \begin{itemize}
+
+    \item $\ds \left(\bigcup_{i=1}^{n} A_i\right)^c =
+     \bigcap_{i=1}^n A_i^c$
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$\ds \left(\bigcup_{i=1}^{n} A_i\right)^c =
+     \bigcap_{i=1}^n A_i^c$
+\end{verbatim}
+
+     \vfill
+
+     \pause
+
+     \item $A\times B = \set{(a,b)|a\in A, b\in B}$
+
+     \vfill
+
+     \pause
+
+     \item \begin{verbatim}
+$A\times B = \set{(a,b)|a\in A, b\in B}$
+\end{verbatim}
+
+
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+
+  \begin{itemize}
+
+\item Consider the equation of Energy below.
+
+ \begin{equation}\label{eq:energy}
+     E(u) = \int |\nabla u|^2 dx
+ \end{equation}
+
+This is how we refer to \eqref{eq:energy}.
+
+\pause
+
+\vfill
+
+\item\begin{verbatim}
+ \begin{equation}\label{eq:energy}
+     E(u) = \int |\nabla u|^2 dx
+ \end{equation}
+
+This is how we refer to \eqref{eq:energy}.
+\end{verbatim}
+
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+
+  \begin{itemize}
+
+\item Consider the equation without a number below.
+
+ \begin{equation}
+     E(u) = \int |\nabla u|^2 dx \nonumber
+ \end{equation}
+
+
+\pause
+
+\vfill
+
+\item\begin{verbatim}
+ \begin{equation}\label{eq:energy}
+     E(u) = \int |\nabla u|^2 dx \nonumber
+ \end{equation}
+\end{verbatim}
+
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+   \framesubtitle{Tag an equation}
+  \begin{itemize}
+
+\item Consider the equation with a tag
+
+ \begin{equation}\label{eq:energytag}
+     E(u) = \int |\nabla u|^2 dx \tag{E}
+ \end{equation}
+
+ If $u$ is harmonic, \eqref{eq:energytag} is preserved.
+
+\pause
+
+\vfill
+
+\item\begin{verbatim}
+ \begin{equation}\label{eq:energytag}
+     E(u) = \int |\nabla u|^2 dx \tag{E}
+ \end{equation}
+
+If $u$ is harmonic, \eqref{eq:energytag} is preserved.
+\end{verbatim}
+
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+   \framesubtitle{a small proof}
+  \begin{itemize}
+
+\item Indeed,
+
+ \begin{equation}
+  \begin{split}
+   \dfrac{d}{dt} E(u) & = 2 \int \langle\nabla u,\nabla u\rangle\\
+   & = -2 \int\langle\Delta u,u\rangle = 0
+  \end{split}
+ \end{equation}
+
+\pause
+
+\vfill
+
+\item The ``='' signs are aligned.
+
+\vfill
+
+\pause
+
+\item Use \begin{verbatim} \begin{split} ... \end{split}
+\end{verbatim}
+
+
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+   \framesubtitle{a small proof}
+  \begin{itemize}
+
+\item \begin{verbatim}
+ \begin{equation}
+  \begin{split}
+   \dfrac{d}{dt} E(u) & = 2 \int \langle\nabla u,
+                                 \nabla u\rangle\\
+   & = -2 \int\langle\Delta u,u\rangle = 0
+  \end{split}
+ \end{equation}
+
+\end{verbatim}
+
+
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+  \frametitle{Equations}
+   \framesubtitle{in an array}
+  \begin{itemize}
+
+\item Consider the expression below
+
+ \begin{equation}
+  \begin{split}
+   (a+b)^2 &  = (a+b)(a+b) \\
+           &  = a^2 +2ab +b^2
+   \end{split}
+ \end{equation}
+
+
+\pause
+
+\vfill
+
+\item\begin{verbatim}
+ \begin{equation}
+  \begin{split}
+   (a+b)^2 &  = (a+b)(a+b) \\
+           &  = a^2 +2ab +b^2
+  \end{split}
+ \end{equation}
+\end{verbatim}
+
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+  \frametitle{Environments}
+
+  In LaTeX, environments must match:
+
+  \begin{itemize}
+
+  \item\begin{verbatim}
+  \begin{...}
+  .
+  .
+  .
+  \end{...}
+  \end{verbatim}
+
+  \pause
+
+  \item \$ ...\$ $\to$ for math symbols
+
+  \pause
+
+  \item \verb|\[ ... \]| $\to$ for centering expressions
+
+  \pause
+
+  \item \verb|\left( ... \right)| $\to$ match size of parentheses
+
+  \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Environments}
+   \framesubtitle{delimiters}
+  \begin{itemize}
+
+  \item $(\ds\int|\nabla u|^p d\mu)^p$ versus $\left(\ds\int|\nabla u|^p d\mu\right)^p$
+
+  \pause
+
+  \vfill
+
+  \item \begin{verbatim}
+$(\ds\int|\nabla u|^p d\mu)^p$
+  \end{verbatim}
+
+
+  \item \begin{verbatim}
+$\left(\ds\int|\nabla u|^p d\mu\right)^p$
+  \end{verbatim}
+
+
+
+\end{itemize}
+
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+  \frametitle{Tables}
+
+  Consider the truth table:
+
+  \jl
+
+  \begin{tabular}{c c c | c}
+$P$ & $Q$ & $\neg P$ & $\neg P\to (P \vee Q)$ \\ \hline
+T & T & F & T \\
+T & F & F & T \\
+F & T & T & T \\
+F & F & T & F
+\end{tabular}
+
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Tables - code}
+\begin{verbatim}
+
+  \begin{tabular}{c c c | c}
+$P$ & $Q$ & $\neg P$ & $\neg P\to (P \vee Q)$ \\ \hline
+T & T & F & T \\
+T & F & F & T \\
+F & T & T & T \\
+F & F & T & F
+
+\end{tabular}
+
+\end{verbatim}
+
+
+\end{frame}
+\end{comment}
+
+
+\begin{frame}
+\vspace{-3mm}  
+\frametitle{References}
+%\begin{thebibliography}{99} 
+%\bibitem[J. Yang, A. Adelmann, et al., NIM-A {\bf 704}(11) (2013)] {daeiso} J. Yang, Adelmann et al.,  NIM-A {\bf 704}(11) 84-91 (2013)
+%\bibitem[J. M. Conrad, M. H. Shaevitz PRL {\bf104}, 141802 (2010)]{daed}J. M. Conrad, M. H. Shaevitz, Multiple Cyclotron Method to Search for CP Violation in the Neutrino Sector Phys. Rev. Lett. {\bf104}, 141802 (2010)
+%\bibitem[A. Adelmann et al. arXiv:1207.4895]{daednim}Multimegawatt DAE$\delta$ALUS Cyclotrons for Neutrino Physics, A. Adelmann et al., arXiv:1207.4895 [physics.acc-ph]
+%\bibitem[M. Toggweiler et al., arXiv:1211.3664 (2012), submitted JCP]{TM} M. Toggweiler, A. Adelmann, P. Arbenz, J.J. Yang, arXiv:1211.3664 (2012)
+%\end{thebibliography}
+\printbibliography
+\end{frame}
+\end{document}

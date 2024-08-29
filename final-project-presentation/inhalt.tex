@@ -1,0 +1,523 @@
+
+\section{Problem Introduction}
+
+\begin{frame}{} % Project Goal: Charged Particle Cloud Simulation
+    \begin{block}{Simulate Relaxation Behaviour of a Charged Particle Cloud}
+        Particle characteristics:
+        \begin{itemize}
+            \item Equal mass and charge
+            \item No "physical radius"
+            \item Focus on \textsc{Coulomb} interactions
+        \end{itemize}
+        Collision implementation:
+        \begin{itemize}
+            \item Direct-Simulation-Monte-Carlo (DSMC) approach
+        \end{itemize}
+        Flexibility of the algorithm:
+        \begin{itemize}
+            \item Mass and charge saved individually per particle
+            \item Suitable for mixed plasmas (e.g. ion-electron interactions)
+        \end{itemize}
+    \end{block}
+    \begin{minipage}[c]{\textwidth}
+        \centering
+        \begin{minipage}{0.25\textwidth}
+            \includegraphics[width=\textwidth]{ressources/particle_expansion/position_2.png}
+        \end{minipage}
+        $\longrightarrow$
+        \begin{minipage}{0.25\textwidth}
+            \includegraphics[width=\textwidth]{ressources/particle_expansion/position_8}
+        \end{minipage}
+        $\longrightarrow$
+        \begin{minipage}{0.25\textwidth}
+            \includegraphics[width=\textwidth]{ressources/particle_expansion/position_20}
+        \end{minipage}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}{Landau-Fokker-Planck}
+    Both algorithms converge to the \textsc{Landau-Fokker-Planck} equation.
+    \begin{itemize}
+        \item \textsc{Boltzmann} equation \cite[1]{Rosenbluth1957} (total force field $F^\mu$):
+        \begin{equation*}
+            \pdv{f_a}{t} + v^\mu \pdv{f_a}{x^\mu} + \frac{F^\mu}{m} \pdv{f_a}{v^\mu} = \qty(\fdv{f_a}{t})_\mathrm{c}
+        \end{equation*}
+
+        \item \textsc{Lorentz} force and binary collisions give \textsc{Landau} form \cite{Wang2008}:
+        \begin{equation*}
+        \resizebox{\hsize}{!}{
+            $\qty(\fdv{f_a}{t})_\mathrm{c} = - \sum_b \pdv{v_j} \frac{e_a^2 e_b^2 \,\ln\Lambda}{8 \pi \epsilon_0^2 m_a} \, \int \, \dd v^\prime \qty[\frac{\delta_{jk}}{u} - \frac{u_j u_k}{u^3}] \qty[\frac{f_a}{m_b} \pdv{f_b\qty(v^\prime)}{v_k^\prime} - \frac{f_b}{m_a} \pdv{f_a\qty(v^\prime)}{v_k}]$
+        }
+        \end{equation*}
+
+        \item \textsc{Coulomb}-logarithm $\ln\Lambda$ and \textsc{Debye}-length $\lambda_\mathrm{D}$:
+        \begin{equation*}
+            \ln\Lambda = \ln\qty(\frac{\lambda_\mathrm{D}}{b_0}) ,
+            \qquad
+            \lambda_\mathrm{D} = \sqrt{\frac{\varepsilon_0 k_\mathrm{B} T}{n q^2}} ,
+            \qquad
+            b_0 = \frac{\qty|q_1q_2|}{2 \pi \varepsilon_0 k_\mathrm{B}^3 m_{12} T}
+        \end{equation*}
+    \end{itemize}
+\end{frame}
+
+
+\section{Algorithms}
+
+% First introduce a slide with the most general algorithm.
+% Mention what can be left out...
+\begin{frame}{General Algorithm Simulation Step}
+    Assume a \texttt{ParticleContainer} instance $f$ (particle distribution). 
+    \begin{algorithm}[H]
+    %\caption{General Simulation Step}\label{algo:2.2:GeneralPlasmaSimulation}
+    \begin{algorithmic}[1]
+        %\scriptsize
+        \STATE Select $\Delta t$
+        
+        \texttt{\\}
+        %\texttt{\\/* First, the electric field is calculated on a grid. Then the grid can be used to interpolate the field values onto the particle positions. */}
+        \STATE $E \leftarrow$ runFieldSolver($f$)
+        \STATE pairs $\leftarrow$ selectCollisionPairs($f$)
+        \FOR{Every Particle Pair $(i, j)$}
+            \STATE $\Delta v \leftarrow$ getCollisionUpdate($i$, $j$) 
+            %\texttt{\\/* Advance every particle by $\Delta t$, assume $m_a=m_b$. */}
+            \STATE $v_{i, j} \leftarrow v_{i, j} \pm \frac{\Delta v}{2}$ 
+        \ENDFOR
+
+        \texttt{\\}
+        %\texttt{\\/* Do a leap-frog step (every operation performed particle-wise). */}
+        \STATE $v \leftarrow v + \frac{\Delta t}{2} \cdot \frac{e}{m} \cdot \frac{E}{\epsilon_0}$ \texttt{// Kick 1}
+        \STATE $x \leftarrow x + v \cdot \Delta t$ \texttt{// Drift}
+        \STATE $v \leftarrow v + \frac{\Delta t}{2} \cdot \frac{e}{m} \cdot \frac{E}{\epsilon_0}$ \texttt{// Kick 2}
+
+        \texttt{\\}
+        %\texttt{\\/* Update how particles are distributed onto the computational grid in IPPL. */}
+        \STATE particleNodeDistributionUpdate()
+    \end{algorithmic}
+    \end{algorithm}
+\end{frame}
+
+
+\subsection{\textsc{Takizuka} and \textsc{Abe}'s Algorithm}
+
+\begin{frame}{\textsc{Takizuka} and \textsc{Abe} (1977) \cite[4310]{Wang2008}}
+    Particles $i$ and $j$, number density $n$, $\mathbf{u} = \mathbf{v}_i - \mathbf{v}_j$, reduced mass $m_{ij}$, $u_\perp = \sqrt{u_x^2 + u_y^2}$. Get velocity update $\Delta \mathbf{v}$:
+    \begin{itemize}
+        \item Variance for $\delta = \tan\qty(\frac{\Theta}{2})$ ($\Theta$ scattering angle):
+        $$
+        \expval{\delta^2} = \frac{e_i^2e_j^2n \,\ln\Lambda}{8\pi\epsilon_0^2m_{ij}^2u^3} \cdot \Delta t ,
+        $$
+        sample $\theta$ normally distributed around mean $0$, calculate $\Theta$.
+        \item Sample the azimuthal scattering angle $\Phi$ uniformly in $[0, 2\pi]$.
+        \item Calculate velocity update (conserves \textit{kinetic} energy):
+        $$
+        \Delta \mathbf{v} = \mqty(\frac{u_xu_z}{u_\perp}\sin\Theta\cos\Phi - \frac{u_yu}{u_\perp} \sin\Theta\sin\Phi \\
+                                  \frac{u_yu_z}{u_\perp}\sin\Theta\cos\Phi - \frac{u_xu}{u_\perp} \sin\Theta\sin\Phi \\
+                                  -u_\perp\sin\Theta\cos\Phi) 
+                            - \mathbf{u} \qty(1 - \cos\Theta) .
+        $$
+    \end{itemize}
+\end{frame}
+
+
+\subsection{\textsc{Nanbu}'s Algorithm}
+
+\begin{frame}{\textsc{Nanbu} (1997) \cite[4644]{Nanbu1997}}
+    \begin{itemize}
+        \item Calculate $s \sim \frac{\Delta t}{t_\mathrm{relaxation}}$ and solve (look-up table) for $A$:
+        $$
+        s = \frac{\ln\Lambda}{4\pi} \qty(\frac{2 e^2}{\epsilon_0 m})^2 \frac{n \Delta t}{u^3} , \qquad \coth A - A^{-1} = e^{-s} .
+        $$
+        \item $U_{1,2} \in [0, 1]$ uniformly sampled, scattering angle $\Theta$, azimuthal $\Phi$:
+        $$
+        \cos\Theta = \frac{\ln\qty(e^{-A} + 2 U_1 \, \sinh A)}{A}, 
+        \quad\sin\Theta = \sqrt{1 - \cos^2\Theta},
+        \quad\Phi = 2\pi U_2 .
+        $$
+        \item Calculate the velocity update (careful, here is a different convention in use: $u_\perp^2 = u_y^2+u_z^2$): 
+        $$
+        \Delta \mathbf{v} =  \mathbf{u} \qty(1 - \cos\Theta) - \frac{\sin\Theta}{u_\perp^2} \mqty(-u_\perp^2 \, \cos\Phi \\ u_yu_x\,\cos\Phi + uu_z \,\sin\Phi \\ u_zu_x \cos\Phi - uu_y \,\sin\Phi) .
+        $$
+    \end{itemize}
+\end{frame}
+
+
+\section{Testcases and \textit{My} Results}
+
+\subsection{\textsc{Trubnikov} Test}
+
+\begin{frame}{\textsc{Trubnikov} Test}
+    Initial conditions:
+    \begin{itemize}
+        \item Sample positions uniformly, sample velocities according to:
+        $$
+        f_0(\mathbf{v}) = \qty(\frac{m}{2\pi})^\frac{3}{2} \frac{1}{\sqrt{T_\parallel }T_\perp} \exp\qty( - \frac{m}{2} \qty( \frac{v_\parallel^2}{T_\parallel^2} + \frac{v_\perp^2}{T_\perp^2}) ) , \quad T = \frac{T_\parallel}{3} + \frac{2 T_\perp}{3} .
+        $$
+        \item Energy conservation $\dv{T}{t} = 0$, analytical solution ($\Delta T = T_\perp - T_\parallel$):
+        $$
+        \Delta T(t) = \Delta T \cdot e^{-\frac{t}{\tau}}, 
+        \quad \tau = \frac{5}{8} \sqrt{2\pi} \,\tau_0,
+        \quad \tau_0 = \frac{\sqrt{m}}{\pi \sqrt{2} e^4} \frac{T^{\frac{3}{2}}}{n\,\ln\Lambda}
+        $$
+        \item Numerical temperature (ignore constants):
+        $$
+        T_i = \frac{1}{N} \sum_{i = 1}^N v_i^2, \quad T_\parallel = T_x, \quad T_\perp = \frac{T_y + T_z}{2} .
+        $$
+        \item No self-consistent field (no influence for uniform distribution).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Simple Example with One Realization}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/anisotropic_T_example.pdf}
+    \end{minipage}
+    Gives the expected behaviour. 
+    \begin{alertblock}{Problem}
+        Line is slightly above the analytical solution!
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Accuracy Behaviour: Time vs. Step Sizes}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/temperature_diff_dT_combined_shaded.pdf}
+    \end{minipage}
+    Note: Converges with smaller time step sizes. \textsc{Nanbu} is \textit{very slightly} better for a given $\nu_0\Delta t$, but needs significantly longer.
+\end{frame}
+
+\begin{frame}{Precision Behaviour: Time vs. Step Sizes}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/temperature_std_dt_comparison.pdf}
+    \end{minipage}
+    Note: Standard deviation does not grow once the plasma is relaxed. Time step size has no influence. 
+\end{frame}
+
+\begin{frame}{Accuracy Behaviour: Time vs. Numbers of Particles}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/temperature_diff_N_combined.pdf}
+    \end{minipage}
+    Note: Uses $\nu_0\Delta t=0.2$. Does not change accuracy, only affects precision (next two slide). 
+\end{frame}
+
+\begin{frame}{Precision Behaviour: Time vs. Numbers of Particles}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/temperature_std_N_comparison.pdf}
+    \end{minipage}
+    Note: Uses $\nu_0\Delta t=0.2$. More particles improve precision. \textsc{Nanbu} is \textit{very slightly} above TA.
+\end{frame}
+
+
+
+
+
+
+
+\subsection{\textsc{Dirac} Initial Distribution}
+
+% Easy, when considering adaptive grid sizing!
+\begin{frame}{\textsc{Dirac} Initial Distribution}
+    Initial conditions:
+    \begin{itemize}
+        \item Initialize all velocities to $0$.
+        \item Sample positions uniformly in a cube of length $d_x$ centered in the middle of the domain.
+        \item Activate self-consistent electric field.
+    \end{itemize}
+    \vfill
+    Example $d_x = 0.005 L$, 1000 particles, 500 timesteps and 10 realizations:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_adaptive_mesh_0.005.pdf}
+    \end{minipage}
+    Note: No adaptive grid means all particles are within one cell, delayed and damped initial ``surge'' of the electrical field. 
+\end{frame}
+
+\begin{frame}{Influence of Collisions}
+    $d_x = 0.001$, $N = 1000$, $64$ adaptive grid, $500$ timesteps, $10$ realizations:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_collision_algos_0.00005.pdf}
+    \end{minipage}
+    \vfill
+    Using $d_x = 0.95$ instead:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_collision_algos_5.0.pdf}
+    \end{minipage}
+    Note: Collisions important close to equlibrium/at big timesteps. Drastic change in $|\Delta\mathbf{v}|$ over time: small window where collisions matter. 
+\end{frame}
+
+\begin{frame}{Influence of Mesh Grid Size}
+    Using $d_x = 0.01$, $N = 500$, $400$ timesteps over $10$ realizations with the adaptive grid:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_grid_sizing.pdf}
+    \end{minipage}
+    Note: 
+    \begin{itemize}
+        \item Diminishing return within standard deviation after grid size $16$ (since the potential is almost uniform). 
+        \item Field increases slightly with mesh size (faster space expansion and temperature increase). 
+        \item Slight upwards trend in temperature: potential energy is converted to kinetic energy. 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Influence of (Time) Step Size}
+    $d_x = 0.01$, $N = 500$, $16$ grid size over $100$ realizations and relative error:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_timestepsize.pdf}
+    \end{minipage}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test2/T_E_V_comparison_timestepsize_errors.pdf}
+    \end{minipage}
+    Note: Roughly second order convergence, which is expected from a Leap-frog step.
+\end{frame}
+
+
+\subsection{Disorder Induced Heating of a Cold Sphere}
+
+\begin{frame}{Disorder Induced Heating of a Cold Sphere}
+    Initial conditions according to \cite[595]{Mitchell2015}:
+    \begin{itemize}
+        \item $L = 100\,\si{\micro\metre}$, $N=156055$, $n_0 = 6.67\cdot 10^{18}\,\si{\per\metre\cubed}$.
+        \item Positions uniformly in sphere of radius $R = 17.74\,\si{\micro\metre}$.
+        \item Velocities initially at $0$.
+        \item Linear focusing force: apply equal and opposite radial electrical force (not accumulative, so fast particles will escape after some steps). 
+        \item Additionally: reflect particles on the sphere ``shell''.
+        \item Analyze the $x$-emmitance:
+        $$
+        \varepsilon_{x, \mathrm{rms}} = \sqrt{\langle x^2 \rangle \langle v^2 \rangle - (xv)^2}.
+        $$
+        \item Expect oscillation period of $\tau = 4.3 \cdot 10^{-11}\,\si{\second}$ and a final $x$-emittance value of $\varepsilon_{x,n}^\mathrm{eq} = 0.491 \,\si{\nano\metre}$.    
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Mesh-Grid Size Comparison}
+    $x$ emmitance (left) for different (adaptive) grid sizes and 1 realization:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test3/cold_sphere_grid_comparison.pdf}
+    \end{minipage}
+    \begin{itemize}
+        \item The confinement works well (right plot).
+        \item Dominant frequencies from FFT on the 64 grid emittance:
+        $$
+        2.16\cdot 10^{-11}\,\si{\second},
+        \qquad 6.49\cdot 10^{-11}\,\si{\second},
+        \qquad 3.24\cdot 10^{-11}\,\si{\second} .
+        $$
+        \item Diminishing returns at small grids due to homogeneity of particles.
+        \item Missing ``smoothness'' correlates with spikes in mesh grid volume. % (scaling or precision issue?)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Collision Algorithm Comparison}
+    Using different collision algorithms and $5$ realizations each:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test3/cold_sphere_collision_algo_comparison.pdf}
+    \end{minipage}
+    \begin{itemize}
+        \item As in \cite[595]{Mitchell2015}: no collisions mean lower emittance.
+        \item Collisions significant shortly in the beginning (as before).
+        \item No significant difference between TA and \textsc{Nanbu}.
+        \item Overshoots expected emittance value (as before).
+    \end{itemize}
+\end{frame}
+
+
+\section{Problems and Comparison Differences}
+
+\subsection{Deviation from \cite{Wang2008} for \textsc{Trubnikov}'s Test}
+
+\begin{frame}{Trubnikov ``Reference'' Solution: Test Run}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/Wang_anisotropic.png}
+    \end{minipage}
+    Note: similar behaviour, but simulation slightly above analytical solution.
+\end{frame}
+
+\begin{frame}{Trubnikov ``Reference'' Solution: Time Step Size}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/Wang_dT.png}
+    \end{minipage}
+    \begin{itemize}
+        \item \cite{Wang2008} does not use the analytical solution $\rightarrow$ same convergence discrepancy.
+        \item No explanation: uses a fine solution without providing any details. 
+        \item \textsc{Nanbu} has slightly better accuracy (does not mention computation time).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Trubnikov ``Reference'' Solution: Number of Particles}
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/test1/Wang_N.png}
+    \end{minipage}
+    \begin{itemize}
+        \item Paper notes convergence in $N$.
+        \item Does not mention the analytical solution and uses a fine solution.
+        \item Looking at the first graph, their analytical solution is also significantly lower.
+        \item \cite{Wang2008} never mentioned their domain size, $n$ or $\ln\Lambda$, $\lambda_\mathrm{D}$ calculation.
+    \end{itemize}
+\end{frame}
+
+
+\subsection{Cold Sphere $\gg$ \textsc{Debye}-Length}
+
+\begin{frame}{Insignificance of Collisions During Cold Sphere Heating}
+    The program has to options:
+    \begin{itemize}
+        \item Calculate $\lambda_\mathrm{D}$, compute collisions in a grid of size $\frac{L}{\lambda_\mathrm{D}}$.
+        \item Compute collisions per usual grid cell.
+    \end{itemize}
+    Problem ($k_\mathrm{B}T_\mathrm{eq} \approx 1.96\si{\milli\electronvolt}$):
+    $$
+    \lambda_\mathrm{D} = \sqrt{\frac{\varepsilon_0 k_\mathrm{B} T}{n q^2}} \approx 0.13\,\si{\micro\metre} .
+    $$
+    \begin{itemize}
+        \item Gives on average $0.06$ particles per cell.
+        \item Confirms marginal significance of collisions in this context.
+    \end{itemize}
+    Therefore: here obtained result makes sense!
+\end{frame}
+
+
+\subsection{Field Solver Scaling Issue}
+
+% Depending the adaptive gridsize
+\begin{frame}{Adaptive Grid Sizing: Scaling Problem}
+    Same simulation, no adaptive grid and different grid sizes:
+    \begin{minipage}{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{ressources/additional/disorder_heating_grid_comparison.pdf}
+    \end{minipage}
+    \begin{itemize}
+        \item Oscillations are way more regular.
+        \item Is way closer to the expected equilibrium ($0.491\,\si{\nano\metre}$).
+        \item Oscillation period seems unchanged.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Adaptive Grid Sizing: Implementation}
+    \begin{itemize}
+        \item Inside \verb|advance()|, calculate self-consistent field using:
+    \end{itemize}
+\begin{lstlisting}
+if (this->computeSelfField_m) {
+    if (this->adjust_field_dims) adjustFieldMeshDimensions(); 
+    this->par2grid();
+    this->fsolver_m->runSolver();
+    this->grid2par();
+    if (this->adjust_field_dims) resetBoundaries();
+}
+\end{lstlisting}
+    \begin{itemize}
+    \item Adjust grid dimensions, such that every particle is barely in it.
+    \item After solving and interpolating onto the particles, the boundaries are resetted to the value before.
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{Adaptive Grid Sizing: Adjust Dimensions}
+\begin{lstlisting}
+void adjustFieldMeshDimensions() {
+    std::shared_ptr<ParticleContainer_t> pc = this->pcontainer_m;
+    auto *mesh = &this->fcontainer_m->getMesh();
+    auto *FL   = &this->fcontainer_m->getFL();
+
+    // Calculate the maximum and minimum of all particle coordinates using Kokkos
+    view_type* R               = &(pc->R.getView());
+    MinMaxReducer<Dim> minMax;
+    findMinMax(R, minMax); 
+    Vector_t<double, Dim> maxR = minMax.max_val, minR = minMax.min_val;
+    
+    // Now figure out componentwise global min/max values
+    Vector_t<double, Dim> globalMaxR, globalMinR;
+    for (size_t i = 0; i < Dim; i++) {
+        ippl::Comm->reduce(&maxR[i], &globalMaxR[i], 1, std::greater<double>());
+        ippl::Comm->reduce(&minR[i], &globalMinR[i], 1, std::less<double>());
+    }
+
+    // Calculate new mesh spacing 
+    Vector_t<double, Dim> hr = (globalMaxR-globalMinR) / mesh->getGridsize(); 
+    
+    // set the origin and mesh spacing of the mesh via
+    mesh->setMeshSpacing(hr);
+    mesh->setOrigin(globalMinR); 
+
+    this->rmin_m = globalMinR;
+    this->origin_m = globalMinR;
+    this->rmax_m = globalMaxR;
+    this->hr_m = hr;
+
+    extLayoutUpdate(FL, mesh);
+    pc->update();
+}
+\end{lstlisting}
+    \begin{itemize}
+        \item Manually reset \verb|rmin|, \verb|rmax| and recalculate \verb|hr|.
+        \item Update the mesh container.
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{Adaptive Grid Sizing: Extended Layout Update}
+\begin{lstlisting}
+void extLayoutUpdate(ippl::FieldLayout<Dim>* fl, ippl::UniformCartesian<T, Dim>* mesh) {
+    std::shared_ptr<ParticleContainer_t> pc = this->pcontainer_m;
+    std::shared_ptr<FieldContainer_t> fc    = this->fcontainer_m;
+
+    Field_t<Dim>* rho_m   = &(fc->getRho());
+    VField_t<T, Dim>* E_m = &(fc->getE());
+
+    rho_m->updateLayout(*fl);
+    E_m->updateLayout(*fl);
+    pc->getLayout().updateLayout(*fl, *mesh);
+    
+    std::get<FFTSolver_t<T, Dim>>(this->fsolver_m->getSolver()).setRhs(*rho_m);
+}
+\end{lstlisting}
+    \begin{itemize}
+        \item Does a few (technically redundant) updates.
+        \item Additional \verb|updateLayout| do not make a difference.
+    \end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]{Adaptive Grid Sizing: Reset Boundaries}
+    Calculating the electrical field:
+\begin{lstlisting}
+void resetBoundaries() {
+    this->origin_m = 0.0;
+    this->rmin_m   = this->origin_m;
+    if (this->initial_distr == "sphere") {
+        this->rmax_m = 506.84;
+    } else {
+        this->rmax_m = 1.0;
+    }
+    this->hr_m     = this->rmax_m / this->nr_m;
+
+    std::shared_ptr<ParticleContainer_t> pc = this->pcontainer_m;
+    auto *FL = &this->fcontainer_m->getFL();
+    auto *mesh = &this->fcontainer_m->getMesh();
+    
+    // set the origin and mesh spacing of the mesh via
+    mesh->setMeshSpacing(this->hr_m);
+    mesh->setOrigin(this->rmin_m); 
+}
+\end{lstlisting}
+    \begin{itemize}
+        \item Manually reset \verb|rmin|, \verb|rmax| and recalculate \verb|hr|.
+        \item Update the mesh container.
+    \end{itemize}
+\end{frame}
+
+
