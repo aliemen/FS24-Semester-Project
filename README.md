@@ -1,5 +1,5 @@
 # Monte Carlo Solution to Coulomb Collisions using IPPL
-The repository to my semester project in computational physics in FS24.
+The repository to my semester project in computational physics in FS24. The complete report can be found [here](https://github.com/aliemen/FS24-Semester-Project/tree/main/project-report).
 
 
 # RUN THE CODE
@@ -37,3 +37,13 @@ Choose how you want to compile the code. Then there are three possibilities to r
 3. `./Nanbu sphere 32 156055 1000 true true false true Nanbu 327.59496 0.0 1.0 10 --info 10`: Choose the "Cold Sphere Heating" testcase, a `32^3` grid, `156055` particles, `1000` timesteps, four bools (use self consisten electrical field, compute collisions, output debug, use adaptive mesh), `Nanbu` is the collision algorithm, `327.59496` is the timestepsize, `0.0` is a initial velocity scaling factor, `1.0` is a multipliert to the confinement force and `10` is the number of realizations.
 
 Make sure to create a `data` folder in the same folder as the `Nanbu` executable.
+
+
+# Reproduce Report Plots
+
+All plots created for the report are produced using Python 3 and the Jupyter Notebooks listed [here](https://github.com/aliemen/FS24-Semester-Project/tree/main/plot-reproducability). They are separated by test case and contain all code necessary. The same folder also contains all data files (mostly `.csv`) generated using the command described above with the parameters mentioned in the report at the respective section.
+
+
+# Final Project Presentation
+
+The final results were presented at [PSI](https://amas.web.psi.ch/) on August 22nd, 2024. LaTeX code and PDF for the final presentation can be found [here](https://github.com/aliemen/FS24-Semester-Project/tree/main/final-project-presentation).
