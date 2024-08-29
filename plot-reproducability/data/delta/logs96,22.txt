@@ -1,0 +1,44 @@
+
+
+------------------------------------------
+1722029921496, 2024-07-26 23:38:41.496
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 1 , 1 , 1 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 1000
+	Total number of timesteps: 500
+	Grid dimensions:           ( 64 , 64 , 64 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          TakAbe
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         1
+	Initial distribution:      delta
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      0.005
+	Field solver grid adjust.: 1
+
+
+------------------------------------------
+1722029951122, 2024-07-26 23:39:11.122
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 1 , 1 , 1 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 1000
+	Total number of timesteps: 500
+	Grid dimensions:           ( 64 , 64 , 64 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          TakAbe
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         1
+	Initial distribution:      delta
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      0.005
+	Field solver grid adjust.: 0

@@ -1,0 +1,66 @@
+
+
+------------------------------------------
+1722039371417, 2024-07-27 02:16:11.417
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 1 , 1 , 1 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 500
+	Total number of timesteps: 500
+	Grid dimensions:           ( 8 , 8 , 8 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        0
+	Collision Method:          TakAbe
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         1
+	Initial distribution:      delta
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      0.95
+	Field solver grid adjust.: 1
+
+
+------------------------------------------
+1722039380700, 2024-07-27 02:16:20.700
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 1 , 1 , 1 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 500
+	Total number of timesteps: 500
+	Grid dimensions:           ( 8 , 8 , 8 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          TakAbe
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         1
+	Initial distribution:      delta
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      0.95
+	Field solver grid adjust.: 1
+
+
+------------------------------------------
+1722039390279, 2024-07-27 02:16:30.279
+	Rmin:                      ( 0 , 0 , 0 )
+	Rmax:                      ( 1 , 1 , 1 )
+	Origin:                    ( 0 , 0 , 0 )
+	Total number of particles: 500
+	Total number of timesteps: 500
+	Grid dimensions:           ( 8 , 8 , 8 )
+	Loadbalancer threshold:    0.01
+	Field solver:              FFT
+	Compute self-field:        1
+	Compute collisions:        1
+	Collision Method:          Nanbu
+	Nanbu2-tau parameter:      1
+	Nanbu2 stepsize fraction:  1
+	Mass per particle:         1
+	Initial distribution:      delta
+	Initial Seed               0 (may change with realization)
+	Delta sampling ratio:      0.95
+	Field solver grid adjust.: 1
