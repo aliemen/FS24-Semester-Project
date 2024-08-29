@@ -1,5 +1,5 @@
-# FS24-Semester-Project
-The repository to my semester project in computational physics.
+# Monte Carlo Solution to Coulomb Collisions using IPPL
+The repository to my semester project in computational physics in FS24.
 
 
 # RUN THE CODE
