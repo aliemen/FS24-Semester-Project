@@ -3,6 +3,7 @@
 % "Vorgegebene packages"
 \usepackage{a4wide}
 %\usepackage{fancyhdr} % delete this, I prefer "scrlayer-scrpage"
+\usepackage{tikz} % other cool packages?
 \usepackage{graphicx}
 \usepackage{floatflt, epsfig}
 \usepackage{float} % allows for the usage of \begin{figure}[H] to specify "in-text-floating"
@@ -34,6 +35,33 @@
 \usepackage{pdfpages} % Simple attachment of pdf files (such as measurement report)
 \usepackage{makecell} % Line breaks within tables
 
+% The following paragraph contains stuff to display code nicely
+\usepackage{listings}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    breakatwhitespace=false,     
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+
 %Kopfzeile (design-Vorschlag)
 \usepackage[headsepline]{scrlayer-scrpage}
 \newpairofpagestyles{trueempty}{
@@ -45,7 +73,8 @@
 \automark[section]{section}
 \cfoot{\pagemark}
 \ohead{} % 
-\ihead{DSMC Collision Algorithms\\\leftmark} % statt \ohead{Physics Lab I\\Experiment October 15, 2021} 
+\ihead{DSMC for Coulomb Collisions\\\leftmark} % statt \ohead{Physics Lab I\\Experiment October 15, 2021} 
+
 
 % Other mathematical additions
 \usepackage{physics} % Other mathematical additionsThe most important package for writing fractions/matrices/derivations/... to write. Instructions: http://mirrors.ibiblio.org/CTAN/macros/latex/contrib/physics/physics.pdf
@@ -56,49 +85,65 @@
 
 \newcommand{\m}[1]{\mathrm{#1}} % Shortcut for bold formulas (such as $\m{F}$, which makes “F” bold)
 
-\title{\vspace{-2cm}Galaxy Morphology} % add "\vspace{-1.8cm}" to move contents a bit up...
-\author{Alexander Liemen}
+%\author{Alexander Liemen}
 \date{\today}
 
 \begin{document}
 
-%\maketitle
 \begin{titlepage}
-    \begin{center}
-        % title
-        %\vspace*{-1.5cm}
-        {\Huge Direct Simulation Monte Carlo Method Adapted for Coulomb Collisions}
-        
-        % subtitle (optional)
-        {\large HS24 Semester Project Report}
-        \vspace{1cm}
-        
-        % our names and e-mail adresses in a table!
+\title{
+    \vspace*{-3cm}  
+    \begin{figure}[H]
+        \includegraphics[scale=0.65]{ressources/logos/ethlogo_full.pdf}
+        \hfill
+        \includegraphics[scale=0.4]{ressources/logos/psi_logo_blue.pdf}
+    \end{figure}
+    \begin{tikzpicture}
+        \draw[very thick] (0,0) -- (\textwidth,0);
+    \end{tikzpicture}
+    \bfseries {\\\huge \sc{Direct Simulation Monte Carlo Methods Adapted for Coulomb Collisions}}
+    \begin{tikzpicture}
+        \draw[very thick] (0,0) -- (\textwidth,0);
+    \end{tikzpicture}
+}
+\author{
+        \textsc{{{Semester Project}}} \\[5pt] 
+        \small ETH Zurich \vspace{0.4cm} \\[0.2in]
+        \\ \small written by \\[5pt]
+        %\small \sc{BSc ETH xxx} \\
         \begin{minipage}[h]{\linewidth}
             \centering
             \begin{tabular}{r|l}
-                Alexander Liemen & \href{mailto:alexander.liemen@inf.ethz.ch}{alexander.liemen@inf.ethz.ch} 
+                \sc{Alexander Liemen} & \href{mailto:alexander.liemen@inf.ethz.ch}{alexander.liemen@inf.ethz.ch} 
             \end{tabular}
-        \end{minipage}
-        \vspace{0.5cm}
-        
-        % name of our TA/supervisor
-        {\large\textit{Supervisor: Mohsen Sadr}}
-        \vspace{0.5cm}
-        
-        % last compiled date
-        {\large\today}
-    \end{center}
-    
-    \vfil
-    \begin{abstract}\label{abstract}
-This project focuses on simulating the relaxation behavior of a charged plasma, typically composed of electrons, using a particle-based approach. 
-%Plasma simulations have wide ranging applications, including advancements in particle accelerator technology, plasma-light interactions, and space propulsion systems. Among the various simulation methods, 
-This study employs the Direct Simulation Monte Carlo (DSMC) approach to address the computational challenges inherent in solving kinetic equations for plasmas. The implementation leverages the IPPL (Independent Parallel Particle Layer) framework and evaluates two collision algorithms, proposed by \textsc{Takizuka} and \textsc{Abe} (TA), and \textsc{Nanbu}. \\
-IPPL allows the algorithm to be fast and scalable. Both algorithms are benchmarked using three tests: the \textsc{Trubnikov} test to evaluate the collisions, the relaxation of a delta-like initial distribution and the induced heating of a cold sphere. \\
-Overall, the project concludes that \textsc{Nanbu}'s algorithm (1997) does not provide a significant advantage over TA (1977) in its proposed implementation due to its increased computation time. However, further improvements are addressed at the end. All test cases can be solved with the studied algorithms.
-    \end{abstract}
+        \end{minipage} 
+        \vspace{1cm} \\
+        \small supervised by \\[5pt]
+        Dr.\ Andreas\ Adelmann \\
+		\vspace{0.5cm} \\
+        \small scientific adviser \\[5pt]
+        Dr.\ Sadr\ Mohsen \\
+        \vspace{1.5cm} \\
+        \today
+}
+\date{}
+% \clearpage
+%\maketitle
+\thispagestyle{empty}
 \end{titlepage}
+
+\maketitle
+
+
+\newpage
+\thispagestyle{empty}
+\begin{abstract}\label{abstract}
+    This project focuses on simulating the relaxation behavior of a charged plasma, typically composed of electrons, using a particle-based approach. 
+    %Plasma simulations have wide ranging applications, including advancements in particle accelerator technology, plasma-light interactions, and space propulsion systems. Among the various simulation methods, 
+    This study employs the Direct Simulation Monte Carlo (DSMC) approach to address the computational challenges inherent in solving kinetic equations for plasmas. The implementation leverages the IPPL (Independent Parallel Particle Layer) framework and evaluates two collision algorithms, proposed by \textsc{Takizuka} and \textsc{Abe} (TA), and \textsc{Nanbu}. \\
+    IPPL allows the algorithm to be fast and scalable. Both algorithms are benchmarked using three tests: the \textsc{Trubnikov} test to evaluate the collisions, the relaxation of a delta-like initial distribution and the induced heating of a cold sphere. \\
+    Overall, the project concludes that \textsc{Nanbu}'s algorithm (1997) does not provide a significant advantage over TA (1977) in its proposed implementation due to its increased computation time caused by the need to solve an additional equation. However, further improvements are addressed at the end.
+\end{abstract}
 
 \newpage
 \tableofcontents
