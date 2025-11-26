@@ -1,3 +1,5 @@
+[![Latest PDF](https://img.shields.io/github/v/release/aliemen/FS24-Semester-Project?style=flat-square)](https://github.com/aliemen/FS24-Semester-Project/releases/latest)
+
 # Monte Carlo Solution to Coulomb Collisions using IPPL
 The repository to my semester project in computational physics in FS24. The complete report can be found [here](https://github.com/aliemen/FS24-Semester-Project/tree/main/project-report).
 
